@@ -67,6 +67,11 @@ public class JSmallLetter{
                     number = 0;
                     break;
 
+                case 'x':
+                    textIndex = -1;
+                    number = Integer.MAX_VALUE;
+                    break;
+
                 case 'i':
                     if(textIndex > -1)
                         text[textIndex]++;
@@ -101,21 +106,29 @@ public class JSmallLetter{
 
                     break;
 
-                case 'm':
-                   stack.push( JSmallLetter.invokeMethod(stack, false));
+                case 'o':
+                    stack.pop();
+                    break;
+
+                case 'c':
+                   stack.push(JSmallLetter.callConstructor(stack));
                    break;
 
+                case 'm':
+                    stack.push( JSmallLetter.invokeMethod(stack, false));
+                    break;
+
                 case 's':
-                   stack.push( JSmallLetter.invokeMethod(stack, true));
-                   break;
+                    stack.push( JSmallLetter.invokeMethod(stack, true));
+                    break;
 
                 case 'f':
                     stack.push(JSmallLetter.getField(stack, false));
-                   break;
+                    break;
 
                 case 'g':
-                   stack.push( JSmallLetter.getField(stack, true));
-                   break;
+                    stack.push( JSmallLetter.getField(stack, true));
+                    break;
             }
 
             index++;
