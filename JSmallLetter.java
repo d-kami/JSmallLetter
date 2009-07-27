@@ -129,6 +129,12 @@ public class JSmallLetter{
                 case 'g':
                     stack.push( JSmallLetter.getField(stack, true));
                     break;
+
+                case 'v':
+                    for(Object obj : stack)
+                        System.out.println(obj);
+
+                    break;
             }
 
             index++;
@@ -136,11 +142,40 @@ public class JSmallLetter{
     }
 
     private static Object callConstructor(Stack<Object> stack)
-           throws ClassNotFoundException,  NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+         throws ClassNotFoundException,  NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
 
         String className = stack.pop().toString();
 
-        int parameterCount = Integer.parseInt(stack.pop().toString());
+        String parameter = stack.pop().toString();
+        int parameterCount = 0;
+        if(parameter.equals("type")){
+            parameterCount = Integer.parseInt(stack.pop().toString());
+            return JSmallLetter.callConstructorWithType(stack, className, parameterCount);
+        }else{
+            parameterCount = Integer.parseInt(parameter);
+            return JSmallLetter.callConstructorWithoutType(stack, className, parameterCount);
+        }
+    }
+
+    private static Object callConstructorWithType(Stack<Object> stack, String className, int parameterCount)
+          throws ClassNotFoundException,  NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+
+        Class<?>[] types = new Class<?>[parameterCount];
+        Object[] args = new Object[parameterCount];
+
+       for(int i = 0; i < parameterCount; i++){
+            types[i] = Class.forName(stack.pop().toString());
+        }
+
+        for(int i = 0; i < parameterCount; i++){
+            args[i] = stack.pop();;
+        }
+
+        return JSmallLetter.callConstructor(className, types, args);
+    }
+
+    private static Object callConstructorWithoutType(Stack<Object> stack, String className, int parameterCount)
+          throws ClassNotFoundException,  NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
 
         Class<?>[] types = new Class<?>[parameterCount];
         Object[] args = new Object[parameterCount];
@@ -156,10 +191,72 @@ public class JSmallLetter{
 
     private static Object callConstructor(String className, Class<?>[] types, Object[] args)
             throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+
         Class<?> clazz = Class.forName(className);
 
         Constructor constructor = clazz.getConstructor(types);
         return constructor.newInstance(args);
+    }
+
+    private static Object invokeMethod(Stack<Object> stack, boolean isStatic)
+           throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+
+        Object target = null;
+        if(!isStatic)
+            target = stack.pop();
+
+        String className = stack.pop().toString();
+        String methodName = stack.pop().toString();
+
+        String parameter = stack.pop().toString();
+        int parameterCount = 0;
+        if(parameter.equals("type")){
+            parameterCount = Integer.parseInt(stack.pop().toString());
+            return JSmallLetter.invokeMethodWithType(stack, target, className, methodName, parameterCount);
+        }else{
+            parameterCount = Integer.parseInt(parameter);
+            return JSmallLetter.invokeMethodWithoutType(stack, target, className, methodName, parameterCount);
+        }
+    }
+
+    private static Object invokeMethodWithType(Stack<Object> stack, Object target, String className, String methodName, int parameterCount)
+          throws ClassNotFoundException,  NoSuchMethodException, IllegalAccessException, InvocationTargetException{
+
+        Class<?>[] types = new Class<?>[parameterCount];
+        Object[] args = new Object[parameterCount];
+
+       for(int i = 0; i < parameterCount; i++){
+            types[i] = Class.forName(stack.pop().toString());
+        }
+
+        for(int i = 0; i < parameterCount; i++){
+            args[i] = stack.pop();;
+        }
+
+        return JSmallLetter.invokeMethod(className, target, methodName, types, args);
+    }
+
+    private static Object invokeMethodWithoutType(Stack<Object> stack, Object target, String className, String methodName, int parameterCount)
+          throws ClassNotFoundException,  NoSuchMethodException, IllegalAccessException, InvocationTargetException{
+
+        Class<?>[] types = new Class<?>[parameterCount];
+        Object[] args = new Object[parameterCount];
+
+        for(int i = 0; i < parameterCount; i++){
+            Object arg = stack.pop();
+            types[i] = arg.getClass();
+            args[i] = arg;
+        }
+
+        return JSmallLetter.invokeMethod(className, target, methodName, types, args);
+    }
+
+    private static Object invokeMethod(String className, Object target, String methodName, Class<?>[] types, Object[] args)
+            throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
+        Class<?> clazz = Class.forName(className);
+
+        Method method = clazz.getMethod(methodName, types);
+        return method.invoke(target, args);
     }
 
    private static Object getField(Stack<Object> stack, boolean isStatic)
@@ -181,37 +278,5 @@ public class JSmallLetter{
         Class<?> clazz = Class.forName(className);
         Field field = clazz.getField(fieldName);
         return field.get(target);
-    }
-
-    private static Object invokeMethod(Stack<Object> stack, boolean isStatic)
-           throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-
-        Object target = null;
-        if(!isStatic)
-            target = stack.pop();
-
-        String className = stack.pop().toString();
-
-        String methodName = stack.pop().toString();
-        int parameterCount = Integer.parseInt(stack.pop().toString());
-
-        Class<?>[] types = new Class<?>[parameterCount];
-        Object[] args = new Object[parameterCount];
-
-        for(int i = 0; i < parameterCount; i++){
-            Object arg = stack.pop();
-            types[i] = arg.getClass();
-            args[i] = arg;
-        }
-
-        return JSmallLetter.invokeMethod(className, target, methodName, types, args);
-    }
-
-    private static Object invokeMethod(String className, Object target, String methodName, Class<?>[] types, Object[] args)
-            throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
-        Class<?> clazz = Class.forName(className);
-
-        Method method = clazz.getMethod(methodName, types);
-        return method.invoke(target, args);
     }
 }
